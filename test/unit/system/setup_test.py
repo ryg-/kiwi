@@ -99,6 +99,12 @@ class TestSystemSetup:
             ),
             call(
                 [
+                    'cp', '{0}/disk.sh'.format(self.description_dir),
+                    'root_dir/image/disk.sh'
+                ]
+            ),
+            call(
+                [
                     'cp',
                     '{0}/my_edit_boot_script'.format(self.description_dir),
                     'root_dir/image/edit_boot_config.sh'
@@ -145,7 +151,7 @@ class TestSystemSetup:
         self, mock_path, mock_command, mock_create
     ):
         path_return_values = [
-            True, False, True, True, True, True, True
+            True, False, True, True, True, True, True, True
         ]
 
         def side_effect(arg):
@@ -161,6 +167,12 @@ class TestSystemSetup:
                 [
                     'cp', '{0}/config.sh'.format(self.description_dir),
                     'root_dir/image/config.sh'
+                ]
+            ),
+            call(
+                [
+                    'cp', '{0}/disk.sh'.format(self.description_dir),
+                    'root_dir/image/disk.sh'
                 ]
             ),
             call(
@@ -202,7 +214,7 @@ class TestSystemSetup:
     def test_import_description_configured_editboot_scripts_not_found(
         self, mock_path, mock_command
     ):
-        path_return_values = [False, True, True]
+        path_return_values = [False, True, True, True]
 
         def side_effect(arg):
             return path_return_values.pop()
@@ -212,17 +224,21 @@ class TestSystemSetup:
             with raises(KiwiImportDescriptionError):
                 self.setup_with_real_xml.import_description()
 
+    @patch('kiwi.path.Path.create')
     @patch('kiwi.command.Command.run')
     @patch('os.path.exists')
     def test_import_description_configured_archives_not_found(
-        self, mock_path, mock_command
+        self, mock_path, mock_command, mock_create
     ):
-        path_return_values = [False, False, True, True, True, True]
+        path_return_values = [
+            False, False, True, True, True, True, True, True
+        ]
 
         def side_effect(arg):
             return path_return_values.pop()
 
         mock_path.side_effect = side_effect
+
         with patch('builtins.open'):
             with raises(KiwiImportDescriptionError):
                 self.setup_with_real_xml.import_description()
@@ -626,6 +642,27 @@ class TestSystemSetup:
 
         mock_command.assert_called_once_with(
             ['chroot', 'root_dir', '/image/config.sh']
+        )
+
+    @patch('kiwi.command.Command.call')
+    @patch('kiwi.command_process.CommandProcess.poll_and_watch')
+    @patch('os.path.exists')
+    @patch('os.stat')
+    @patch('os.access')
+    def test_call_disk_script(
+        self, mock_access, mock_stat, mock_os_path, mock_watch, mock_command
+    ):
+        result_type = namedtuple(
+            'result_type', ['stderr', 'returncode']
+        )
+        mock_result = result_type(stderr='stderr', returncode=0)
+        mock_os_path.return_value = True
+        mock_watch.return_value = mock_result
+        mock_access.return_value = False
+
+        self.setup.call_disk_script('/dev/root')
+        mock_command.assert_called_once_with(
+            ['chroot', 'root_dir', 'bash', '/image/disk.sh', '/dev/root']
         )
 
     @patch('kiwi.command.Command.call')
@@ -1111,3 +1148,8 @@ class TestSystemSetup:
             'uri-alias', 'uri', 'rpm-md', None, None, None, None, None,
             'kiwiRepoCredentials', None, None, None
         )
+
+    @patch('os.path.exists')
+    def test_script_exists(self, mock_path_exists):
+        assert self.setup.script_exists('some-script') == \
+            mock_path_exists.return_value

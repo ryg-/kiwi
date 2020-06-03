@@ -95,6 +95,9 @@ class SystemSetup:
         self._import_custom_archives()
         self._import_cdroot_archive()
 
+    def script_exists(self, name):
+        return os.path.exists(self.description_dir + '/' + name)
+
     def cleanup(self):
         """
         Delete all traces of a kiwi description which are not
@@ -525,6 +528,14 @@ class SystemSetup:
             self._export_deb_package_verification(filename)
             return filename
 
+    def call_disk_script(self, disk_device):
+        """
+        Call disk.sh script chrooted
+        """
+        self._call_script(
+            Defaults.get_post_disk_sync_script_name(), [disk_device]
+        )
+
     def call_config_script(self):
         """
         Call config.sh script chrooted
@@ -846,6 +857,10 @@ class SystemSetup:
                 filepath='images.sh',
                 raise_if_not_exists=False
             ),
+            Defaults.get_post_disk_sync_script_name(): script_type(
+                filepath=Defaults.get_post_disk_sync_script_name(),
+                raise_if_not_exists=False
+            ),
             'edit_boot_config.sh': script_type(
                 filepath=self.xml_state.build_type.get_editbootconfig(),
                 raise_if_not_exists=True
@@ -892,13 +907,14 @@ class SystemSetup:
                 ]
             )
 
-    def _call_script(self, name):
+    def _call_script(self, name, option_list=None):
         script_path = os.path.join(self.root_dir, 'image', name)
         if os.path.exists(script_path):
+            options = option_list or []
             command = ['chroot', self.root_dir]
             if not Path.access(script_path, os.X_OK):
                 command += ['bash']
-            command += ['/image/' + name]
+            command += ['/image/' + name] + options
             config_script = Command.call(command)
             process = CommandProcess(
                 command=config_script, log_topic='Calling ' + name + ' script'

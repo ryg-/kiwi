@@ -1526,6 +1526,18 @@ class Defaults:
         elif package_manager == 'pacman':
             return 'pacman'
 
+    @staticmethod
+    def get_post_disk_sync_script_name():
+        """
+        Provides file name of post sync disk script called for
+        image types that builds a virtual disk
+
+        :return: basename of script file
+
+        :rtype: str
+        """
+        return 'disk.sh'
+
     def get(self, key):
         """
         Implements get method for profile elements

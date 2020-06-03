@@ -459,6 +459,19 @@ class DiskBuilder:
                 self._get_exclude_list_for_root_data_sync(device_map)
             )
 
+        # run post sync script hook
+        if self.system_setup.script_exists(
+            Defaults.get_post_disk_sync_script_name()
+        ):
+            disk_system = SystemSetup(
+                self.xml_state, self.system.get_mountpoint()
+            )
+            disk_system.import_description()
+            disk_system.call_disk_script(
+                device_map['root'].get_device()
+            )
+            disk_system.cleanup()
+
         # install boot loader
         self._install_bootloader(device_map)
 

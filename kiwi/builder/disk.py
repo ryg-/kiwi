@@ -467,9 +467,7 @@ class DiskBuilder:
                 self.xml_state, self.system.get_mountpoint()
             )
             disk_system.import_description()
-            disk_system.call_disk_script(
-                device_map['root'].get_device()
-            )
+            disk_system.call_disk_script()
             disk_system.cleanup()
 
         # install boot loader

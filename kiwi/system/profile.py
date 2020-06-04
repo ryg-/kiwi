@@ -53,6 +53,18 @@ class Profile:
         self._drivers_to_profile()
         self._root_partition_uuid_to_profile()
 
+    def get(self):
+        """
+        Return all profile elements that has a value
+        """
+        profile = {}
+        for key, value in list(self.dot_profile.items()):
+            if value:
+                profile[format(key)] = self._format(value)
+        return collections.OrderedDict(
+            sorted(profile.items())
+        )
+
     def add(self, key, value):
         """
         Add key/value pair to profile dictionary
@@ -72,16 +84,13 @@ class Profile:
 
         :param str filename: file path name
         """
-        sorted_profile = collections.OrderedDict(
-            sorted(self.dot_profile.items())
-        )
+        sorted_profile = self.get()
         temp_profile = NamedTemporaryFile()
         with open(temp_profile.name, 'w') as profile:
             for key, value in list(sorted_profile.items()):
-                if value:
-                    profile.write(
-                        format(key) + '=' + self._format(value) + '\n'
-                    )
+                profile.write(
+                    '{0}={1}{2}'.format(key, value, os.linesep)
+                )
         profile_environment = Shell.quote_key_value_file(temp_profile.name)
         with open(filename, 'w') as profile:
             for line in profile_environment:

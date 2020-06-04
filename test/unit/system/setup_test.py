@@ -600,14 +600,19 @@ class TestSystemSetup:
         m_open.assert_called_once_with('root_dir/etc/ImageID', 'w')
         m_open.return_value.write.assert_called_once_with('42\n')
 
+    @patch('kiwi.system.setup.Profile')
     @patch('kiwi.command.Command.call')
     @patch('kiwi.command_process.CommandProcess.poll_and_watch')
     @patch('os.path.exists')
     @patch('os.stat')
     @patch('os.access')
     def test_call_non_excutable_config_script(
-        self, mock_access, mock_stat, mock_os_path, mock_watch, mock_command
+        self, mock_access, mock_stat, mock_os_path, mock_watch,
+        mock_command, mock_Profile
     ):
+        profile = Mock()
+        mock_Profile.return_value = profile
+        profile.get.return_value = {}
         result_type = namedtuple(
             'result', ['stderr', 'returncode']
         )
@@ -618,17 +623,22 @@ class TestSystemSetup:
 
         self.setup.call_config_script()
         mock_command.assert_called_once_with(
-            ['chroot', 'root_dir', 'bash', '/image/config.sh']
+            ['chroot', 'root_dir', 'bash', '/image/config.sh'], os.environ
         )
 
+    @patch('kiwi.system.setup.Profile')
     @patch('kiwi.command.Command.call')
     @patch('kiwi.command_process.CommandProcess.poll_and_watch')
     @patch('os.path.exists')
     @patch('os.stat')
     @patch('os.access')
     def test_call_excutable_config_script(
-        self, mock_access, mock_stat, mock_os_path, mock_watch, mock_command
+        self, mock_access, mock_stat, mock_os_path, mock_watch,
+        mock_command, mock_Profile
     ):
+        profile = Mock()
+        mock_Profile.return_value = profile
+        profile.get.return_value = {}
         result_type = namedtuple(
             'result', ['stderr', 'returncode']
         )
@@ -641,17 +651,22 @@ class TestSystemSetup:
         self.setup.call_config_script()
 
         mock_command.assert_called_once_with(
-            ['chroot', 'root_dir', '/image/config.sh']
+            ['chroot', 'root_dir', '/image/config.sh'], os.environ
         )
 
+    @patch('kiwi.system.setup.Profile')
     @patch('kiwi.command.Command.call')
     @patch('kiwi.command_process.CommandProcess.poll_and_watch')
     @patch('os.path.exists')
     @patch('os.stat')
     @patch('os.access')
     def test_call_disk_script(
-        self, mock_access, mock_stat, mock_os_path, mock_watch, mock_command
+        self, mock_access, mock_stat, mock_os_path, mock_watch,
+        mock_command, mock_Profile
     ):
+        profile = Mock()
+        mock_Profile.return_value = profile
+        profile.get.return_value = {}
         result_type = namedtuple(
             'result_type', ['stderr', 'returncode']
         )
@@ -660,19 +675,24 @@ class TestSystemSetup:
         mock_watch.return_value = mock_result
         mock_access.return_value = False
 
-        self.setup.call_disk_script('/dev/root')
+        self.setup.call_disk_script()
         mock_command.assert_called_once_with(
-            ['chroot', 'root_dir', 'bash', '/image/disk.sh', '/dev/root']
+            ['chroot', 'root_dir', 'bash', '/image/disk.sh'], os.environ
         )
 
+    @patch('kiwi.system.setup.Profile')
     @patch('kiwi.command.Command.call')
     @patch('kiwi.command_process.CommandProcess.poll_and_watch')
     @patch('os.path.exists')
     @patch('os.stat')
     @patch('os.access')
     def test_call_image_script(
-        self, mock_access, mock_stat, mock_os_path, mock_watch, mock_command
+        self, mock_access, mock_stat, mock_os_path, mock_watch,
+        mock_command, mock_Profile
     ):
+        profile = Mock()
+        mock_Profile.return_value = profile
+        profile.get.return_value = {}
         result_type = namedtuple(
             'result_type', ['stderr', 'returncode']
         )
@@ -683,7 +703,7 @@ class TestSystemSetup:
 
         self.setup.call_image_script()
         mock_command.assert_called_once_with(
-            ['chroot', 'root_dir', 'bash', '/image/images.sh']
+            ['chroot', 'root_dir', 'bash', '/image/images.sh'], os.environ
         )
 
     @patch('kiwi.command.Command.call')

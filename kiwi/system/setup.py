@@ -39,6 +39,7 @@ from kiwi.archive.tar import ArchiveTar
 from kiwi.utils.compress import Compress
 from kiwi.utils.command_capabilities import CommandCapabilities
 from kiwi.utils.rpm_database import RpmDataBase
+from kiwi.system.profile import Profile
 
 from kiwi.exceptions import (
     KiwiImportDescriptionError,
@@ -528,12 +529,12 @@ class SystemSetup:
             self._export_deb_package_verification(filename)
             return filename
 
-    def call_disk_script(self, disk_device):
+    def call_disk_script(self):
         """
         Call disk.sh script chrooted
         """
         self._call_script(
-            Defaults.get_post_disk_sync_script_name(), [disk_device]
+            Defaults.get_post_disk_sync_script_name()
         )
 
     def call_config_script(self):
@@ -915,7 +916,10 @@ class SystemSetup:
             if not Path.access(script_path, os.X_OK):
                 command += ['bash']
             command += ['/image/' + name] + options
-            config_script = Command.call(command)
+            profile = Profile(self.xml_state)
+            caller_environment = os.environ
+            caller_environment.update(profile.get())
+            config_script = Command.call(command, caller_environment)
             process = CommandProcess(
                 command=config_script, log_topic='Calling ' + name + ' script'
             )

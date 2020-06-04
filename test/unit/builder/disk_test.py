@@ -459,9 +459,7 @@ class TestDiskBuilder:
         )
         self.setup.script_exists.assert_called_once_with('disk.sh')
         disk_system.import_description.assert_called_once_with()
-        disk_system.call_disk_script.assert_called_once_with(
-            '/dev/root-device'
-        )
+        disk_system.call_disk_script.assert_called_once_with()
         self.setup.call_edit_boot_config_script.assert_called_once_with(
             'btrfs', 1
         )
